@@ -731,6 +731,7 @@ void showHelp(void) {
 "--html-dir <dir>         Use <dir> as base directory for the internal HTTP server. Defaults to " HTMLPATH "\n"
 "--write-json <dir>       Periodically write json output to <dir> (for serving by a separate webserver)\n"
 "--write-json-every <t>   Write json output every t seconds (default 1)\n"
+"--write-json-stdout      Write json output to stdout as messages are received\n"
 "--json-location-accuracy <n>  Accuracy of receiver location in json metadata: 0=no location, 1=approximate, 2=exact\n"
 "--dcfilter               Apply a 1Hz DC filter to input data (requires lots more CPU)\n"
 "--help                   Show this help\n"
@@ -831,6 +832,11 @@ void backgroundTasks(void) {
 
     if (Modes.json_dir && now >= next_json) {
         writeJsonToFile("aircraft.json", generateAircraftJson);
+        next_json = now + Modes.json_interval;
+    }
+
+    if (Modes.json_stdout && now >= next_json) {
+        writeJsonToStdout(generateAircraftJson);
         next_json = now + Modes.json_interval;
     }
 
@@ -1108,6 +1114,8 @@ int main(int argc, char **argv) {
             Modes.json_interval = (uint64_t)(1000 * atof(argv[++j]));
             if (Modes.json_interval < 100) // 0.1s
                 Modes.json_interval = 100;
+        } else if (!strcmp(argv[j], "--write-json-stdout")) {
+            Modes.json_stdout = 1;
         } else if (!strcmp(argv[j], "--json-location-accuracy") && more) {
             Modes.json_location_accuracy = atoi(argv[++j]);
 #endif
